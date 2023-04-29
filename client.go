@@ -1,6 +1,7 @@
 package dalle
 
 import (
+	"errors"
 	"net/http"
 	"time"
 )
@@ -22,6 +23,15 @@ type Client struct {
 
 // NewClient creates a new Dalle API client.
 func NewClient(apiKey string, domain string, opts ...ClientOption) (*Client, error) {
+
+	if apiKey == "" {
+		return nil, errors.New("api key is required")
+	}
+
+	if domain == "" {
+		domain = DefaultDomain
+	}
+
 	client := &Client{
 		APIKey:     apiKey,
 		Domain:     domain,
