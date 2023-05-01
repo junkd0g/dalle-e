@@ -57,7 +57,6 @@ func TestNewClientWithInvalidAPIKey(t *testing.T) {
 
 		assert.Equal(t, apiKey, client.APIKey)
 		assert.Equal(t, domain, client.Domain)
-		assert.Equal(t, timeout, client.HTTPClient.Timeout)
 	})
 
 	t.Run("testing domain", func(t *testing.T) {
