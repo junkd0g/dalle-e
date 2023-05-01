@@ -19,7 +19,10 @@ func (c *Client) post(endpoint, version, payload string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add(authorizationStr, c.APIKey)
+
+	fmt.Println(fmt.Sprintf("Bearer %s", c.APIKey))
+
+	req.Header.Add(authorizationStr, fmt.Sprintf("Bearer %s", c.APIKey))
 	req.Header.Add(contentTypeStr, contentTypeValueStr)
 
 	res, err := c.Client.Do(req)
