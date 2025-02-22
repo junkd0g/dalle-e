@@ -2,8 +2,7 @@ package dalle_test
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -33,7 +32,7 @@ func TestGenerateImageV1(t *testing.T) {
 		receivedRequest = r
 
 		var err error
-		requestBody, err = ioutil.ReadAll(r.Body)
+		requestBody, err = io.ReadAll(r.Body)
 		assert.NoError(t, err, "Should be able to read request body")
 		defer r.Body.Close()
 
@@ -42,7 +41,6 @@ func TestGenerateImageV1(t *testing.T) {
 
 		// Set HTTP status to OK and return dummy image data
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "dummy-image-data")
 	}))
 	defer ts.Close()
 

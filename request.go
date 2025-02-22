@@ -2,7 +2,7 @@ package dalle
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -20,8 +20,6 @@ func (c *Client) post(endpoint, version, payload string) ([]byte, error) {
 		return nil, err
 	}
 
-	fmt.Println(fmt.Sprintf("Bearer %s", c.APIKey))
-
 	req.Header.Add(authorizationStr, fmt.Sprintf("Bearer %s", c.APIKey))
 	req.Header.Add(contentTypeStr, contentTypeValueStr)
 
@@ -31,7 +29,7 @@ func (c *Client) post(endpoint, version, payload string) ([]byte, error) {
 	}
 
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 
 	return body, err
 }
