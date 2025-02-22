@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkd0g/dalle-e"
 	"github.com/stretchr/testify/assert"
@@ -24,60 +24,48 @@ const (
 )
 
 func TestGenerateImageV1(t *testing.T) {
-	// Start a local HTTP test server
+	var receivedRequest *http.Request
+	var requestBody []byte
+
+	// Start a test HTTP server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check if the request method is POST
-		if r.Method != http.MethodPost {
-			t.Errorf("Expected POST request, got %s", r.Method)
-		}
+		// Capture the incoming request for further assertions
+		receivedRequest = r
 
-		// Check if the request headers are set correctly
-		if authHeader := r.Header.Get(authorizationStr); authHeader != testAPIKey {
-			t.Errorf("Expected Authorization header %s, got %s", testAPIKey, authHeader)
-		}
-		if contentType := r.Header.Get(contentTypeStr); contentType != contentTypeValueStr {
-			t.Errorf("Expected Content-Type header %s, got %s", contentTypeValueStr, contentType)
-		}
-
-		// Read request body and check if it matches expected values
-		reqBody, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
+		var err error
+		requestBody, err = ioutil.ReadAll(r.Body)
+		assert.NoError(t, err, "Should be able to read request body")
 		defer r.Body.Close()
 
-		var imgReq dalle.ImageGenerationRequest
-		err = json.Unmarshal(reqBody, &imgReq)
-		if err != nil {
-			t.Fatal(err)
-		}
+		// Validate that the request method is POST
+		assert.Equal(t, http.MethodPost, r.Method, "HTTP method should be POST")
 
-		if imgReq.Prompt != testPrompt {
-			t.Errorf("Expected prompt %s, got %s", testPrompt, imgReq.Prompt)
-		}
-		if imgReq.N != testN {
-			t.Errorf("Expected N %d, got %d", testN, imgReq.N)
-		}
-		if imgReq.Size != testSize {
-			t.Errorf("Expected size %s, got %s", testSize, imgReq.Size)
-		}
-
-		// Respond with a dummy image data
+		// Set HTTP status to OK and return dummy image data
+		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "dummy-image-data")
 	}))
 	defer ts.Close()
 
-	// Create a new client with the test server URL as the domain
-	client, err := dalle.NewClient(testAPIKey, ts.URL)
-	assert.NoError(t, err)
+	// Create a new Dalle client using the test server URL as the domain.
+	client, err := dalle.NewClient(testAPIKey, ts.URL, dalle.WithTimeout(5*time.Second))
+	assert.NoError(t, err, "NewClient should not return an error")
 
-	// Call the GenerateImageV1 function
+	// Call the GenerateImageV1 function to generate an image.
 	resp, err := client.GenerateImageV1(testPrompt, testN, testSize)
-	assert.NoError(t, err)
+	assert.NoError(t, err, "GenerateImageV1 should not return an error")
+	assert.Equal(t, []byte("dummy-image-data"), resp, "Response data should match expected dummy data")
 
-	// Check if the response matches the expected value
-	expectedResp := []byte("dummy-image-data")
-	if !strings.EqualFold(string(resp), string(expectedResp)) {
-		t.Errorf("Expected response %s, got %s", string(expectedResp), string(resp))
-	}
+	// Validate the request headers.
+	assert.NotNil(t, receivedRequest, "A request should have been received by the test server")
+	expectedAuthHeader := "Bearer " + testAPIKey
+	assert.Equal(t, expectedAuthHeader, receivedRequest.Header.Get(authorizationStr), "Authorization header should include the 'Bearer' prefix")
+	assert.Equal(t, contentTypeValueStr, receivedRequest.Header.Get(contentTypeStr), "Content-Type header should be application/json")
+
+	// Verify the JSON request body.
+	var imgReq dalle.ImageGenerationRequest
+	err = json.Unmarshal(requestBody, &imgReq)
+	assert.NoError(t, err, "Request body should be valid JSON")
+	assert.Equal(t, testPrompt, imgReq.Prompt, "Prompt should match expected value")
+	assert.Equal(t, testN, imgReq.N, "Number of images (n) should match expected value")
+	assert.Equal(t, testSize, imgReq.Size, "Size should match expected value")
 }
