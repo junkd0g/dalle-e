@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	// DefaultDomain is the default domain to use for the API.
+	// DefaultDomain is the default API endpoint used if no custom domain is provided.
 	DefaultDomain = "https://api.openai.com"
 )
 
@@ -21,7 +21,9 @@ type Client struct {
 	Client http.Client
 }
 
-// NewClient creates a new Dalle API client.
+// NewClient initializes and returns a new instance of the Dalle API client.
+// It requires a non-empty API key and optionally accepts a custom domain.
+// Additional configuration can be applied using functional options.
 func NewClient(apiKey string, domain string, opts ...ClientOption) (*Client, error) {
 
 	if apiKey == "" {
@@ -45,17 +47,18 @@ func NewClient(apiKey string, domain string, opts ...ClientOption) (*Client, err
 	return client, nil
 }
 
-// ClientOption is a function that modifies the client's configuration.
+// ClientOption defines a function type for configuring the Client.
+// It allows for modular and flexible client configuration.
 type ClientOption func(*Client)
 
-// WithHTTPClient sets the HTTP client to use.
+// WithHTTPClient returns a ClientOption that sets a custom HTTP client for making API requests.
 func WithHTTPClient(httpClient *http.Client) ClientOption {
 	return func(c *Client) {
 		c.Client = *httpClient
 	}
 }
 
-// WithTimeout sets the timeout for API requests.
+// WithTimeout returns a ClientOption that configures the timeout duration for API requests.
 func WithTimeout(timeout time.Duration) ClientOption {
 	return func(c *Client) {
 		c.Client.Timeout = timeout

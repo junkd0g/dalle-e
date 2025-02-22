@@ -5,7 +5,9 @@ import (
 	"fmt"
 )
 
-// GenerateImageV1 generates an image from a prompt.
+// GenerateImageV1 sends a request to generate an image from a provided prompt.
+// It takes a prompt string, the number of images (n), and the size as parameters.
+// The function returns the response as a byte slice or an error if any.
 func (c *Client) GenerateImageV1(prompt string, n int, size string) ([]byte, error) {
 	reqBody, err := json.Marshal(ImageGenerationRequest{
 		Prompt: prompt,
