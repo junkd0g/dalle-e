@@ -26,9 +26,9 @@ func TestGenerateImageV1(t *testing.T) {
 	var receivedRequest *http.Request
 	var requestBody []byte
 
-	// Start a test HTTP server
+	// Start a test HTTP server that returns dummy image data.
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Capture the incoming request for further assertions
+		// Capture the incoming request for further assertions.
 		receivedRequest = r
 
 		var err error
@@ -36,11 +36,13 @@ func TestGenerateImageV1(t *testing.T) {
 		assert.NoError(t, err, "Should be able to read request body")
 		defer r.Body.Close()
 
-		// Validate that the request method is POST
+		// Validate that the request method is POST.
 		assert.Equal(t, http.MethodPost, r.Method, "HTTP method should be POST")
 
-		// Set HTTP status to OK and return dummy image data
+		// Write dummy image data to the response body.
 		w.WriteHeader(http.StatusOK)
+		_, err = w.Write([]byte("dummy-image-data"))
+		assert.NoError(t, err, "Should be able to write response body")
 	}))
 	defer ts.Close()
 
